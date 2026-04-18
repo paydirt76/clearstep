@@ -1,6 +1,10 @@
 # Clear Step
 
-**Plan-driven, step-at-a-time workflow for Claude Code.** Four commands. Five files. Your plan survives `/clear` because state lives on disk, not in the conversation. If you've been burned by an autonomous AI run that changed 47 files overnight — or you keep hitting Claude Code's weekly usage caps — this is built for you.
+**Context-engineered, plan-driven, step-at-a-time workflow for Claude Code.** 
+
+Four commands. Five files. Your plan survives `/clear` because state lives on disk, not in the conversation. 
+
+If you've been burned by an autonomous AI run that changed 47 files overnight — or you keep hitting Claude Code's weekly usage caps — this is built for you.
 
 Under the hood, this is a context engineering layer. Every step in the plan declares the files and line ranges it needs upfront. The harness loads exactly those under a 50k-token budget, runs one step, writes a `**Results:**` block, advances the `[n]` marker, then sharpens the next step's Context with what it just learned. The plan file — not the conversation — is the source of truth for what comes next. That makes adherence to the plan structural rather than willpower-based, turns `/clear` into a feature (the next `/step` re-reads the plan from disk, finds the marker, and keeps going), and lets multi-step work that would otherwise pile up 100k+ tokens of accumulated context fit in a focused 50k window per step.
 
