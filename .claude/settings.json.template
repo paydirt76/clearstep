@@ -1,0 +1,42 @@
+{
+  "_install_instructions": [
+    "Copy this file to .claude/settings.json, then find-and-replace {{PROJECT_ROOT}} with your project's absolute path (e.g., /Users/you/myproj or C:/projects/myproj). Delete this _install_instructions key when done.",
+    "The Stop hook is a one-time nudge to install a real beep sound when Claude finishes a turn. Follow the printed prompt to wire one up, then remove the suggest_beep.py hook entry and delete .claude/.beep_prompt_shown."
+  ],
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python {{PROJECT_ROOT}}/.claude/hooks/suggest_beep.py"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(chmod 777 *)",
+      "Bash(mkfs *)",
+      "Bash(dd *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "Bash(git checkout .)",
+      "Bash(git branch -D *)",
+      "Bash(*prisma reset*)",
+      "Bash(find * -delete*)",
+      "Bash(find * -exec rm *)",
+      "Bash(*shutil.rmtree*)",
+      "Bash(*xargs rm*)",
+      "Bash(*xargs *rm *)",
+      "Bash(git restore .)",
+      "Bash(git restore *--staged*)",
+      "Bash(git checkout -- .)"
+    ]
+  }
+}

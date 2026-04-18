@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+dist/
+build/
+
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporary files
+*.tmp
+*.bak
+
+# Claude Code local
+.claude/CLAUDE.local.md
+.claude/settings.local.json
+
+# Clear Step runtime state (user-specific, regenerated per session)
+plans/.step-queue.json
+plans/.step[0-9]-queue.json
+.claude/hall-of-heroes.md
+
+# Build/release artifacts (not shipped to public repo)
+_audit/
+_squat/
