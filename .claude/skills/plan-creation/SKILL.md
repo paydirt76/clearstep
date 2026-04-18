@@ -34,19 +34,26 @@ Guidelines for creating structured, actionable implementation plans stored in `p
 
 ## File Location
 
-**Always store plans in the project-local directory:**
+**Plan files MUST live in `plans/` at the project root, as a SIBLING of `.claude/` — never inside it.**
 
 ```
-plans/plan-name.md
+your-project/
+├── .claude/              <-- Claude's config
+└── plans/                <-- plans go here (sibling, not child)
+    └── your-plan.md
 ```
 
-**Never use:**
-- `.claude/plans/` (old location)
-- `~/.claude/plans/` (user home directory)
-- `C:\Users\username\.claude\plans\`
+**Never write plans to any of these:**
+- `.claude/plans/` — breaks discovery AND edits (see foot-gun below)
+- `~/.claude/plans/` — user home directory, invisible to slash commands
+- `C:\Users\username\.claude\plans\` — Windows form, same problem
 - Any other location
 
-This keeps plans version-controlled with the project.
+**Why `.claude/plans/` is a specific foot-gun:**
+1. Slash commands look for `plans/` at project root. A plan inside `.claude/` is invisible to `/step`, `/plan-creation`, and `/plan-completion`.
+2. Claude Code's bypass-permissions mode explicitly excludes `.claude/` as a safety rail. Every Edit/Write to a plan inside there triggers a permission prompt — even in yolo mode.
+
+This keeps plans version-controlled with the project, discoverable by the slash commands, and editable without permission friction.
 
 ---
 
@@ -631,5 +638,5 @@ For large-scale audits across many projects/files:
 | No success criteria | Add measurable outcomes |
 | No current state | Document starting point |
 | Whimsical name | Use descriptive three-word name |
-| Wrong location | Always use `plans/` |
+| Plan saved inside `.claude/` | Put `plans/` at project root as sibling of `.claude/` |
 
