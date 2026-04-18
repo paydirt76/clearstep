@@ -50,17 +50,19 @@ No package manager. No server. No account. Five files on disk.
 
 ## Project Layout
 
-**One required convention: plan files live in `plans/` at your project root, as a sibling of `.claude/`.** The slash commands are hardcoded to look there. Plan files saved anywhere else will be invisible to `/step`, `/plan-creation`, and `/plan-completion`.
+**One required convention: `plans/` MUST be a sibling of `.claude/`, NOT inside it.** The slash commands are hardcoded to look for `plans/` at your project root. Plan files saved anywhere else will be invisible to `/step`, `/plan-creation`, and `/plan-completion`.
+
+**Common foot-gun: do not put plans inside `.claude/`.** Two things break. (1) The slash commands won't find them — `/step` lists nothing, `/plan-creation` writes to the wrong place. (2) Claude Code's bypass-permissions mode explicitly excludes `.claude/` as a safety rail, so every Edit/Write to a plan inside there triggers a permission prompt even in yolo mode. Keep `plans/` as its own top-level folder.
 
 ```
-your-project/
-├── .claude/
+your-project/                    <-- your project root
+├── .claude/                     <-- Claude's config (commands, skills, hooks, settings)
 │   ├── commands/step.md
 │   ├── skills/{question-loop,plan-creation,plan-completion}/
 │   ├── hooks/suggest_beep.py
 │   └── settings.json
-└── plans/                       <-- you create this once (install does it)
-    ├── hello-clear-step.md      <-- your plan files
+└── plans/                       <-- SIBLING of .claude/, NOT inside it
+    ├── hello-clear-step.md      <-- your plan files live here
     └── .step-queue.json         <-- auto-created on first /step
 ```
 
