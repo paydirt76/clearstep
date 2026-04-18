@@ -2,7 +2,7 @@
 
 **Context-engineered, plan-driven, step-at-a-time workflow for Claude Code.** 
 
-Four commands. Five files. Your plan survives `/clear` because state lives on disk, not in the conversation. 
+Four commands. One template. Your plan survives `/clear` because state lives on disk, not in the conversation. 
 
 If you've been burned by an autonomous AI run that changed 47 files overnight — or you keep hitting Claude Code's weekly usage caps — this is built for you.
 
@@ -12,19 +12,18 @@ Under the hood, this is a context engineering layer. Every step in the plan decl
 
 ## Install
 
-Clone this repo, then copy the four commands/skills, the one hook, and the settings template into your project's `.claude/` directory.
+Clone this repo, then copy the four commands/skills and the settings template into your project's `.claude/` directory.
 
 ```bash
 # macOS / Linux
 git clone https://github.com/<owner>/clearstep.git
 cd clearstep
-mkdir -p ~/your-project/.claude/{commands,skills,hooks} ~/your-project/plans
+mkdir -p ~/your-project/.claude/{commands,skills} ~/your-project/plans
 
 cp    .claude/commands/step.md            ~/your-project/.claude/commands/
 cp -r .claude/skills/question-loop        ~/your-project/.claude/skills/
 cp -r .claude/skills/plan-creation        ~/your-project/.claude/skills/
 cp -r .claude/skills/plan-completion      ~/your-project/.claude/skills/
-cp    .claude/hooks/suggest_beep.py       ~/your-project/.claude/hooks/
 cp    .claude/settings.json.template      ~/your-project/.claude/settings.json
 ```
 
@@ -32,19 +31,18 @@ cp    .claude/settings.json.template      ~/your-project/.claude/settings.json
 # Windows (PowerShell)
 git clone https://github.com/<owner>/clearstep.git
 cd clearstep
-New-Item -ItemType Directory -Force C:\your-project\.claude\commands, C:\your-project\.claude\skills, C:\your-project\.claude\hooks, C:\your-project\plans | Out-Null
+New-Item -ItemType Directory -Force C:\your-project\.claude\commands, C:\your-project\.claude\skills, C:\your-project\plans | Out-Null
 
 Copy-Item          .claude\commands\step.md            C:\your-project\.claude\commands\
 Copy-Item -Recurse .claude\skills\question-loop        C:\your-project\.claude\skills\
 Copy-Item -Recurse .claude\skills\plan-creation        C:\your-project\.claude\skills\
 Copy-Item -Recurse .claude\skills\plan-completion      C:\your-project\.claude\skills\
-Copy-Item          .claude\hooks\suggest_beep.py       C:\your-project\.claude\hooks\
 Copy-Item          .claude\settings.json.template      C:\your-project\.claude\settings.json
 ```
 
-Then open `~/your-project/.claude/settings.json` and find-and-replace `{{PROJECT_ROOT}}` with your project's absolute path. Delete the `_install_instructions` key when done. That's the whole install.
+Open `~/your-project/.claude/settings.json` and delete the `_install_instructions` key. That's the whole install.
 
-No package manager. No server. No account. Five files on disk.
+No package manager. No server. No account. No Python. Five files on disk.
 
 ---
 
@@ -56,10 +54,9 @@ No package manager. No server. No account. Five files on disk.
 
 ```
 your-project/                    <-- your project root
-├── .claude/                     <-- Claude's config (commands, skills, hooks, settings)
+├── .claude/                     <-- Claude's config (commands, skills, settings)
 │   ├── commands/step.md
 │   ├── skills/{question-loop,plan-creation,plan-completion}/
-│   ├── hooks/suggest_beep.py
 │   └── settings.json
 └── plans/                       <-- SIBLING of .claude/, NOT inside it
     ├── hello-clear-step.md      <-- your plan files live here
@@ -83,10 +80,9 @@ The slash commands resolve `plans/` relative to the current working directory, s
 | `/plan-creation` (skill) | Turns exploration into a numbered plan file with `[n]` marker and per-step Context hints. |
 | `/step` (command) | Executes ONE step from the active plan. Three-phase context load (orient -> history -> step + Context files under 50k tokens). Writes a timestamped `**Results:**` block, advances `[n]`, sharpens the next step's Context, stops. |
 | `/plan-completion` (skill) | When all steps are `[x]`: writes a Hall of Heroes eulogy, transitions the plan to `reference`, archives it. |
-| `suggest_beep.py` (hook) | One-time Stop-hook nudge to install your own beep sound. Prints OS-specific snippets, then steps out of the way once you've wired one in. |
-| `settings.json.template` | Minimal hook + permissions scaffold. One Stop hook entry. Empty `allow` list. 19-entry destructive-shell `deny` blocklist. |
+| `settings.json.template` | Minimal permissions scaffold. Empty `allow` list. 19-entry destructive-shell `deny` blocklist. Empty `hooks` block you can fill yourself. |
 
-Four commands. One hook. One template.
+Four commands. One template.
 
 ---
 
@@ -185,7 +181,32 @@ The threshold isn't plan length -- it's whether the work is multi-step or may re
 - **macOS:** untested by the author at launch. On the roadmap. The author runs Windows daily but owns a Mac. Mac testing is the builder's job.
 - **Linux:** the explicit contributor gap. If you run Linux and hit a problem, file it. That's the contribution that matters most at launch.
 
-**Beep notification:** the bundled `suggest_beep.py` is a one-time Stop-hook nudge. It prints OS-specific snippets (PowerShell, `afplay`, `paplay`), then steps out of the way once you've wired one in. Roll your own.
+### Wiring up a beep (optional)
+
+Claude Code doesn't make noise when it finishes a turn. A Stop hook can play a sound. Pick your OS and paste the matching snippet into the `hooks` block of `.claude/settings.json`:
+
+**macOS:**
+```json
+"Stop": [
+  { "hooks": [ { "type": "command", "command": "afplay /System/Library/Sounds/Glass.aiff" } ] }
+]
+```
+
+**Linux:**
+```json
+"Stop": [
+  { "hooks": [ { "type": "command", "command": "paplay /usr/share/sounds/freedesktop/stereo/bell.oga" } ] }
+]
+```
+
+**Windows:**
+```json
+"Stop": [
+  { "hooks": [ { "type": "command", "command": "powershell -c \"[console]::beep(400,500)\"" } ] }
+]
+```
+
+Restart Claude Code for the hook to take effect. Swap in any sound file you prefer.
 
 ---
 

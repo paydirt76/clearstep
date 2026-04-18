@@ -1,20 +1,9 @@
 {
   "_install_instructions": [
-    "Copy this file to .claude/settings.json, then find-and-replace {{PROJECT_ROOT}} with your project's absolute path (e.g., /Users/you/myproj or C:/projects/myproj). Delete this _install_instructions key when done.",
-    "The Stop hook is a one-time nudge to install a real beep sound when Claude finishes a turn. Follow the printed prompt to wire one up, then remove the suggest_beep.py hook entry and delete .claude/.beep_prompt_shown."
+    "Copy this file to .claude/settings.json. No find-and-replace needed — this template has no placeholders. Delete this _install_instructions key when done.",
+    "Optional: wire up a Stop-hook beep by pasting one of the snippets from the README's 'Wiring up a beep' section into the hooks block below."
   ],
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python {{PROJECT_ROOT}}/.claude/hooks/suggest_beep.py"
-          }
-        ]
-      }
-    ]
-  },
+  "hooks": {},
   "permissions": {
     "allow": [],
     "deny": [
