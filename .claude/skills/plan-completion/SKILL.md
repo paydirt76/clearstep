@@ -352,7 +352,38 @@ After reporting completion:
    - Files to review
    - Follow-up actions needed
    - Optional enhancements or future work
-3. **Offer to create follow-up plan** - If next steps are non-trivial, ask: "Want me to create a plan for [next logical work]?"
+3. **Ask about follow-up work.** After the summary and next-steps table, ask whether any thread from the plan deserves to keep going. **Generate the menu AT CLOSE TIME** from what the plan actually produced — do NOT paste a static template.
+
+   **Opener (verbatim):**
+
+   Plan's in the can. Before the result starts collecting dust in the corner, should we...
+
+   **Generation rubric.** Read the Results blocks of every `[x]` step in the closing plan. For each category below, pick the *highest-abstraction, highest-leverage* follow-up you can justify from what the plan built. Each option gets ONE sentence (the pitch, specific to this plan's output) + an optional second line (justification or tool/file reference). If no reasonable candidate surfaces for a category, omit that letter entirely.
+
+   (a) New follow-up plan — biggest unfinished thread, worthy of its own multi-step plan.
+       → /plan-creation (optionally /question-loop first if fuzzy)
+
+   (b) Local scheduled job — recurring script on user's machine that keeps today's work honest or extends it.
+       → Windows Task Scheduler (`schtasks`) or macOS/Linux cron
+
+   (c) Claude Code recurring agent — /loop (in-session) or /schedule (remote cron) that revisits the plan's output on a cadence.
+       → /loop or /schedule (ask which fits)
+
+   (d) Parking-lot reminder — time-delayed check ("in 2 weeks re-read X", "next month verify Y") not worth a plan slot yet.
+       → append to plans/followups-parking-lot.md (create file if missing)
+
+   (e) Dogfood one small thing now — <5-minute action leveraging today's work (skeleton file, quick doc tweak, running the feature once end-to-end).
+       → execute inline; no scheduling or plan creation
+
+   (x) Brainstorm — none of the above quite fits; open conversation.
+       → chat only, no tool invocation
+
+   (q) Done — clean close, file it away.
+       → exit skill normally
+
+   **Routing on selection.** Execute the arrow action for the chosen letter. For (a) confirm whether user wants /question-loop first. For (c) ask /loop vs /schedule. For (d) confirm one-liner wording before appending. "No" / "q" / any "we're done" variant is always valid — don't push.
+
+   **Key principle:** the menu is generated per-plan, not pasted. Generic pitches are a smell — if all five options read like they'd apply to any plan, re-read the Results blocks and find the plan-specific thread.
 
 **Key principle:** The plan created infrastructure - now help the user extract value from it.
 
