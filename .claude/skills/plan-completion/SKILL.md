@@ -16,8 +16,9 @@ No "this feels internal so I'll skip doc updates." No shortcuts.
 - [ ] **Step 6: Update CLAUDE.md -- MANDATORY, NEVER SKIP** (see full rules below)
 - [ ] Step 8: Git commit and push
 - [ ] Step 10: Run completion ritual (eulogy + status transition)
-- [ ] Step 12: Plan disposition
-- [ ] Step 14: Report completion
+- [ ] **Step 12: Summary + follow-up prompt** (forward-looking — BEFORE disposition)
+- [ ] Step 14: Plan disposition
+- [ ] Step 16: Report completion
 
 **If you find yourself thinking "the changes are internal, I'll skip Step 6" --
 STOP. That rationalization is what this checklist exists to prevent. Every
@@ -121,7 +122,7 @@ Understand what's already documented before making updates.
    - **[A] Resolve via `/question-loop`** (per-item). Invoke with the LANDMINE text + full Results-block bullet it lived in + framing question. Loop ends with one of: *Fix now* (edit code, change prefix to `LANDMINE[resolved]:`) / *Silence as resolved* (prefix change + one-line reason) / *Lift to CLAUDE.md* (promote to durable constraint -- informs Step 6; mark source `LANDMINE[resolved]: -> see CLAUDE.md § [section]`).
    - **[B] Defer to NEW followup plan via `/plan-creation`** -- hand-off payload per LANDMINE: source plan path + step number, full Results bullet (origin context), LANDMINE text as step title, pre-seeded `Context:` line with files named in the Results block. Filename: `plans/[source-slug]-followup.md`. Mark source `LANDMINE[resolved]: -> see plans/[source-slug]-followup.md`.
    - **[C] Defer to EXISTING plan** -- user names which. Append as new step with same hand-off payload. Mark source `LANDMINE[resolved]:` with pointer.
-   - **[D] Accept as-is** -- warn of consequence based on Step 12 disposition: *Archive* fossilizes, *Template* should strip, *Delete* loses. Require explicit acknowledgment.
+   - **[D] Accept as-is** -- warn of consequence based on Step 14 disposition: *Archive* fossilizes, *Template* should strip, *Delete* loses. Require explicit acknowledgment.
 
    **For `[w]` waiting -- three options (no accept-as-is; `[w]` blocks the completion gate):**
    - **[A] Resolve via `/question-loop`** -- loop reads the step body (what it's waiting on) and asks whether the wait resolved. Ends with: *Wait resolved* (mark source `[x]` with `{timestamp}`, add short note to Results about how it resolved) / *No longer needed* (mark source `[~]` -- keep full step body, pivot history is the value) / *Still waiting, no ETA* (branch to [B] or [C]).
@@ -301,7 +302,54 @@ git commit -m "chore: Hall of Heroes eulogy for [plan-name]"
 git push
 ```
 
-### 12. Plan Disposition -- Template, Archive, or Delete
+### 12. Summary + Follow-Up Prompt
+
+**This step fires BEFORE disposition.** The follow-up prompt is forward-looking ("what does this work enable next?") and disposition is backward-looking ("file this away"). Running forward-first lets the user's follow-up answer inform how they want the plan file treated.
+
+1. **Summarize what was built** — Table showing components created, their locations, and purpose.
+
+2. **Provide actionable next steps** — How to use what was built:
+   - Commands to run (with full syntax)
+   - Files to review
+   - Follow-up actions needed
+   - Optional enhancements or future work
+
+3. **Ask about follow-up work.** **Generate the menu AT CLOSE TIME** from what the plan actually produced — do NOT paste a static template.
+
+   **Opener (verbatim):**
+
+   Plan's in the can. Before the result starts collecting dust in the corner, should we...
+
+   **Generation rubric.** Read the Results blocks of every `[x]` step in the closing plan. For each category below, pick the *highest-abstraction, highest-leverage* follow-up you can justify from what the plan built. Each option gets ONE sentence (the pitch, specific to this plan's output) + an optional second line (justification or tool/file reference). If no reasonable candidate surfaces for a category, omit that letter entirely.
+
+   (a) New follow-up plan — biggest unfinished thread, worthy of its own multi-step plan.
+       → /plan-creation (optionally /question-loop first if fuzzy)
+
+   (b) Local scheduled job — recurring script on user's machine that keeps today's work honest or extends it.
+       → Windows Task Scheduler (`schtasks`) or macOS/Linux cron
+
+   (c) Claude Code recurring agent — /loop (in-session) or /schedule (remote cron) that revisits the plan's output on a cadence.
+       → /loop or /schedule (ask which fits)
+
+   (d) Parking-lot reminder — time-delayed check ("in 2 weeks re-read X", "next month verify Y") not worth a plan slot yet.
+       → append to plans/followups-parking-lot.md (create file if missing)
+
+   (e) Dogfood one small thing now — <5-minute action leveraging today's work (skeleton file, quick doc tweak, running the feature once end-to-end).
+       → execute inline; no scheduling or plan creation
+
+   (x) Brainstorm — none of the above quite fits; open conversation.
+       → chat only, no tool invocation
+
+   (q) Done — clean close, file it away.
+       → exit skill normally
+
+   **Routing on selection.** Execute the arrow action for the chosen letter. For (a) confirm whether user wants /question-loop first. For (c) ask /loop vs /schedule. For (d) confirm one-liner wording before appending. "No" / "q" / any "we're done" variant is always valid — don't push.
+
+   **Key principle:** the menu is generated per-plan, not pasted. Generic pitches are a smell — if all five options read like they'd apply to any plan, re-read the Results blocks and find the plan-specific thread.
+
+**Key principle:** The plan created infrastructure — now help the user extract value from it BEFORE filing the plan away.
+
+### 14. Plan Disposition -- Template, Archive, or Delete
 
 **Pre-disposition Context: audit (skip only if disposition is delete).** Before templating or archiving, scan ALL `Context:` lines in the plan -- pending, current, AND completed steps -- for plan-hygiene bugs:
 
@@ -340,7 +388,7 @@ These archetypes were designed via Council deliberation (architecture triad: Ari
 
 **If Archive or Delete:** Execute immediately and commit.
 
-### 14. Report Completion
+### 16. Report Completion
 
 After successful ritual and disposition, report status:
 
@@ -351,53 +399,6 @@ Changes committed and pushed to remote.
 Hall of Heroes eulogy generated and saved.
 Plan disposition: [template / archive / deleted]
 ```
-
----
-
-## Post-Completion Summary
-
-After reporting completion:
-
-1. **Summarize what was built** - Table showing components created, their locations, and purpose
-2. **Provide actionable next steps** - How to use what was built:
-   - Commands to run (with full syntax)
-   - Files to review
-   - Follow-up actions needed
-   - Optional enhancements or future work
-3. **Ask about follow-up work.** After the summary and next-steps table, ask whether any thread from the plan deserves to keep going. **Generate the menu AT CLOSE TIME** from what the plan actually produced — do NOT paste a static template.
-
-   **Opener (verbatim):**
-
-   Plan's in the can. Before the result starts collecting dust in the corner, should we...
-
-   **Generation rubric.** Read the Results blocks of every `[x]` step in the closing plan. For each category below, pick the *highest-abstraction, highest-leverage* follow-up you can justify from what the plan built. Each option gets ONE sentence (the pitch, specific to this plan's output) + an optional second line (justification or tool/file reference). If no reasonable candidate surfaces for a category, omit that letter entirely.
-
-   (a) New follow-up plan — biggest unfinished thread, worthy of its own multi-step plan.
-       → /plan-creation (optionally /question-loop first if fuzzy)
-
-   (b) Local scheduled job — recurring script on user's machine that keeps today's work honest or extends it.
-       → Windows Task Scheduler (`schtasks`) or macOS/Linux cron
-
-   (c) Claude Code recurring agent — /loop (in-session) or /schedule (remote cron) that revisits the plan's output on a cadence.
-       → /loop or /schedule (ask which fits)
-
-   (d) Parking-lot reminder — time-delayed check ("in 2 weeks re-read X", "next month verify Y") not worth a plan slot yet.
-       → append to plans/followups-parking-lot.md (create file if missing)
-
-   (e) Dogfood one small thing now — <5-minute action leveraging today's work (skeleton file, quick doc tweak, running the feature once end-to-end).
-       → execute inline; no scheduling or plan creation
-
-   (x) Brainstorm — none of the above quite fits; open conversation.
-       → chat only, no tool invocation
-
-   (q) Done — clean close, file it away.
-       → exit skill normally
-
-   **Routing on selection.** Execute the arrow action for the chosen letter. For (a) confirm whether user wants /question-loop first. For (c) ask /loop vs /schedule. For (d) confirm one-liner wording before appending. "No" / "q" / any "we're done" variant is always valid — don't push.
-
-   **Key principle:** the menu is generated per-plan, not pasted. Generic pitches are a smell — if all five options read like they'd apply to any plan, re-read the Results blocks and find the plan-specific thread.
-
-**Key principle:** The plan created infrastructure - now help the user extract value from it.
 
 ---
 
