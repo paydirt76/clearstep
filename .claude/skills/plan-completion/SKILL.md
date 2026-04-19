@@ -160,6 +160,16 @@ there is something a future session needs to know.
 **Default:** update the project-level CLAUDE.md. Only touch the root CLAUDE.md
 if the work is explicitly global in scope.
 
+**If a project-level CLAUDE.md does not exist:** CREATE one as part of this
+step. Absence is NOT an escape hatch to only update the root CLAUDE.md.
+Populate the new file with what future sessions working inside this project
+need to know: what the directory is, core invariants, sync/relationship
+notes with sibling directories, hard rules for files inside, local-only vs
+shipped distinctions. This applies even when the project is gitignored
+from a parent repo — the project-level CLAUDE.md is for local dev context,
+not for shipping. Gitignore the new CLAUDE.md if appropriate; do not skip
+creating it.
+
 **What to update (pick all that apply):**
 
 - **Common Commands section** — new user-facing scripts or commands
@@ -189,6 +199,8 @@ sessions will read it.
   important thing to document for future sessions
 - "The code is self-documenting" -- future you reads CLAUDE.md first
 - "I'll add it to a future plan" -- that plan will never exist
+- "The project doesn't have a CLAUDE.md yet" -- absence means you CREATE it
+  during this step, not skip. Update-or-create, never just skip
 - "The git history has it" -- nobody reads git history to learn a project
 
 ### 8. Git Commit and Push
