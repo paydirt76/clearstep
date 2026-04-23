@@ -35,7 +35,6 @@ Thumbs.db
 # Clear Step runtime state (user-specific, regenerated per session)
 plans/.step-queue.json
 plans/.step[0-9]-queue.json
-.claude/hall-of-heroes.md
 
 # Build/release artifacts (not shipped to public repo)
 _audit/
