@@ -196,7 +196,7 @@ Which plan should I load into Queue N? (Enter number or filename)
 
    The flag goes in Step 5f reflection with a proposed fix: move to `Script input:` (if API-bound), `Grep targets:` (if searched at execution), narrow to specific files, or add a line range. Do NOT silently swallow the path — the latent budget bomb is exactly what this guardrail catches. The "Phase C is code, not Claude" principle in CLAUDE.md § Step Context Hints is canonical.
 
-3. **Note Skills hints** — if the step has `Skills: parallel-batch, cerebras-api`, remember to invoke those skills during execution.
+3. **Note Skills hints** — if the step has `Skills: data-processing, api-setup`, remember to invoke those skills during execution.
 
 4. **Note Mode hint** — if the step has a `Mode:` line, note the approach for Step 4.
 
@@ -318,6 +318,8 @@ Add immediately after the step header (the body was stripped in 5a):
 
 **If the step wrote an artifact a future step will PARSE (bundle, manifest, JSONL, anything a downstream script will grep/slice):** add a `Markers:` line to Results listing the section-grammar regexes/literals you used (e.g. `Markers: ===== FILE: <name> =====, ### Layer N — <title>, **Delta #N — <title>**`). Phase B reads Results blocks, so this teaches future steps the file's structure for free instead of forcing them to grep-discover it.
 
+**If the step created scratch artifacts not intended to survive plan close** (dry-run outputs, throwaway scripts, review bundles, intermediate extraction files): add a `Temp files:` line to Results listing comma-separated paths or globs (e.g. `Temp files: plans/.tmp-dry-run.txt, scratch-*.py`). Globs expand at sweep time inside `/plan-completion`'s closing sweep — not at write time. Omit the line entirely when a step produced no scratch; no `Temp files: None` noise. Author judgment calls what counts as scratch at write time; under-tag is safer than over-sweep since the sweep is destructive — a file you wanted to keep that got tagged and swept is a worse outcome than a forgotten scratch file that survives.
+
 ### 5c: Advance the [n] Marker
 
 Follow this decision tree to find and mark the next action:
@@ -357,7 +359,7 @@ After completing a step, you know more than the plan writer did. Update the NEXT
 Integrate the validator into the main processing loop.
 
 Context: validator.py:20-45 (validate_record function), pipeline.py:80-110 (process loop)
-Skills: parallel-batch
+Skills: data-processing
 ```
 
 If the next step already has a `Context:` line, merge your additions into it. If it has none, add one.
@@ -444,10 +446,10 @@ STOP. Do NOT edit the plan. Wait for user confirmation before editing.
 If plan is complete, tell the user:
 
 ```
-Plan complete! Run /plan-completion to generate the Hall of Heroes eulogy and finalize.
+Plan complete! Run /plan-completion to finalize.
 ```
 
-Do NOT change plan status or remove from index — `/plan-completion` handles the full ritual (eulogy generation, status transition to `reference`, index removal).
+Do NOT change plan status or remove from index — `/plan-completion` handles the full ritual (status transition to `reference`, disposition choice, index removal).
 
 ## Step 7: Stop
 

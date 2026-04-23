@@ -25,7 +25,7 @@ Guidelines for creating structured, actionable implementation plans stored in `p
 | Location | `plans/plan-name.md` |
 | Naming | Three descriptive words: `company-research-engine.md` |
 | Frontmatter | YAML block with project, status, type, description, priority, created |
-| Sections | Goal, Current State, Constraints, Steps, Files to Create, Success Criteria |
+| Sections | Goal, Current State, Constraints, Steps, Files to Modify, Success Criteria |
 | Step format | `### [ ] Step N: Title` with inline marker |
 | Completion marker | `### [x] Step N: Title` |
 | Numbering | Sparse (gaps between numbers for future insertions) |
@@ -124,12 +124,12 @@ Mode: 2 (create)
 
 ---
 
-## Files to Create
+## Files to Modify
 
 | File | Purpose |
 |------|---------|
-| `path/to/file.py` | Brief description |
-| `path/to/config.yaml` | Brief description |
+| `path/to/file.py` | Brief description (new or modified) |
+| `path/to/config.yaml` | Brief description (new or modified) |
 
 ---
 
@@ -450,6 +450,8 @@ Only after the conversation produces a clear approach, create the plan file. The
 
 7. **Add success criteria** - How will we know when we're done?
 
+8. **Prepend the auto-inserted Step 0 Gap Analysis block** — after the plan body is written but before finalizing, paste the `Step 0 template` from `## Step 0: Auto-Inserted Gap Analysis` (below) at the TOP of Implementation Steps. Step 0 carries the `[n]` marker; Step 2 onward stays `[ ]`. Step 0 fills the pre-slot the sparse-numbering convention already reserves — the "start at 2" rule leaves slot 0 open by design, so Step 0 uses it rather than breaking the rule. The author's plan still starts at Step 2. Mandatory by default; no size gate, no opt-out. Best quality when the reviewer is Opus — if you're on Sonnet or Haiku, consider `/model opus` before the first `/step` run so Step 0's review uses the strongest model.
+
 ### Example: Starting a New Plan
 
 ```markdown
@@ -479,6 +481,10 @@ Add secure user authentication with JWT tokens and session management.
 
 ## Implementation Steps
 
+### [n] Step 0: Gap Analysis — in-session review with /question-loop
+
+Parent step. (b) generate structured review in-session, (d) walk findings via /question-loop. Auto-inserted by /plan-creation; mandatory by default. See the `## Step 0: Auto-Inserted Gap Analysis` section in the skill for the full template.
+
 ### [ ] Step 2: Add user model and database migration
 
 Create `models/user.py` with:
@@ -505,38 +511,100 @@ Add bcrypt dependency and create `auth/password.py` with:
 
 ---
 
-## Plan Review Phase (Gap Analysis)
+## Step 0: Auto-Inserted Gap Analysis
 
-**After writing the plan, before executing with /step, run it through a second model for critique.**
+**After writing the plan body but before finalizing, `/plan-creation` auto-inserts a Step 0 at the top of Implementation Steps.** Step 0 runs a two-pass critique of the plan (plus the files the plan modifies, subject to a size budget), then walks the findings via `/question-loop` so accepted ones become plan edits before Step 2 executes. It is mandatory by default — not opt-in, not size-gated. The first `/step` invocation on the generated plan runs Step 0. Every plan gets this.
 
-Send the full plan text to Claude Sonnet (via Task tool with subagent_type=general-purpose) with this prompt:
+### Four review dimensions
+
+Every finding is tagged with exactly one of these:
+
+- **Missing steps** — what's assumed but not specified.
+- **Underspecified steps** — where the executor would need to make judgment calls or ask clarifying questions.
+- **Dependency gaps** — steps that depend on something not produced by a prior step.
+- **Likely intervention points** — where a human will need to step in during autonomous execution.
+
+### Two-pass lens coverage
+
+Before emitting the findings list, the reviewer runs two explicit passes:
+
+- **Prompt-craft lens:** wording clarity, option specification, subjective-text approval gates, line-range brittleness, numbering conventions, output-file routing, step-dependency checks.
+- **Infrastructure lens:** state preconditions, output file locations, rollback paths, destructive-step ordering, scope-creep traps, parked-state verification.
+
+Both run in a single reviewer session. Prompt-craft catches sloppy instructions; infrastructure catches missing state checks. The pair closes a blind-spot gap either lens alone would leave.
+
+### Per-finding output format
 
 ```
-Review this implementation plan. Identify:
-1. Missing steps — what's assumed but not specified?
-2. Underspecified steps — which steps would require the executor to make judgment calls or ask clarifying questions?
-3. Dependency gaps — are there steps that depend on something not produced by a prior step?
-4. Likely intervention points — where will the human need to step in during autonomous execution?
-
-Be specific. For each issue, say which step it affects and what's missing.
+**Finding N: <title>**
+- Dimension: <Missing step | Underspecified step | Dependency gap | Likely intervention point>
+- Severity: <1-10>
+- Reason: <one sentence>
+- What you noticed: <1-2 sentences of concrete evidence>
+- Proposed fix: <one line>
 ```
 
-### Why this works
+A `TOTAL` line at the bottom summarizes severity distribution and severity-7+ count.
 
-Opus writes plans, Sonnet reviews them. Different model, different perspective — catches assumptions the planner baked in. The goal is to surface issues that would cause mid-execution interventions, BEFORE you start `/step`.
+### Severity rubric (1-10)
 
-### When to use it
+| Score | Label | Action |
+|-------|-------|--------|
+| **10** | Reactor meltdown — plan premise wrong | **ABORT — re-plan from scratch** |
+| **9** | Load-bearing design gap (cascades, needs design decision) | Edit plan pre-execution; user input likely |
+| **8** | Step blocker (one step ambiguous enough to fail) | Fix the step body before that step runs |
+| **7** | Done-gate gap (feature described as rationale, not bound to output) | Add explicit done-gate item |
+| **6** | Pre-execution precondition (documented elsewhere, missing from step body) | Hoist into step body |
+| **5** | In-flight patchable (subjective; user-in-loop can redirect at runtime) | Trust user-in-loop, optional pre-fix |
+| **4** | Drive-by improvement (real value, not blocking) | Apply if <60s |
+| **3** | Forward-looking nit (value lives in future template work) | Note for downstream template |
+| **2** | Self-downgraded nit (formatting, line ranges, narrowing) | 10-second fix or skip |
+| **1** | Cosmetic nit (zero execution impact) | Skip |
 
-- **Always** for plans with 10+ steps
-- **Recommended** for plans touching multiple projects or unfamiliar code
-- **Skip** for simple 3-5 step plans on well-understood code
+### Severity-forcing self-check (mandatory, critical in-session reviewer)
 
-### Iteration
+AFTER emitting the initial findings list, the reviewer re-reads its own list and asks, for every mid-band finding (severity 4-6): *"does this need to be fixed BEFORE Step 2 of the reviewed plan executes, or can it be patched inline during execution?"* Anything that must be fixed pre-execution gets upgraded to severity 7+.
 
-If the critique surfaces real gaps:
-1. Update the plan file with the missing steps/details
-2. Re-run the critique until the model reports no major gaps
-3. Then freeze the plan and begin `/step` execution
+This self-check matters MORE in the public variant than in an API-gated one: the reviewer is the same Claude Code session that just wrote the plan, with no model-change firewall between writer and reviewer. That self-bias shows up as severity undercalling. Treat the self-check as a forcing function with extra weight — err toward upgrade when on the fence.
+
+### Abort threshold
+
+Recommend rerunning `/plan-creation` from scratch (NOT patching via `/question-loop`) if either condition holds after the self-check:
+
+- **Any finding at severity 10** (plan premise wrong), OR
+- **Five or more findings at severity 7+** (accumulated blocking work).
+
+Either condition alone aborts.
+
+### Context bundling for Step 0
+
+The reviewer reads the plan file AND the files the plan materially modifies (pulled from the plan's `## Files to Modify` table if present). Size cap: **≤ 400K chars bundled** (Claude Code in-session review window). If the bundle would exceed the cap, drop lowest-priority files first (reference docs before insertion targets). The plan text itself is never dropped.
+
+### Step 0 template — auto-inserted into every generated plan
+
+```markdown
+### [n] Step 0: Gap Analysis — in-session review with /question-loop
+
+Parent step. Two sub-steps: (b) generate the structured review in-session, (d) walk findings via /question-loop and apply accepted edits to this plan before Step 2 begins. Abort ramp: if accepted findings at severity 7+ reach 5 during the walk, stop and rerun /plan-creation from scratch.
+
+( ) Step 0b: Generate the structured review in-session
+
+Read this plan and the files it materially modifies (≤ 400K chars total; drop reference docs first if over cap). Review in two explicit passes: (1) prompt-craft lens — wording clarity, option specification, line-range brittleness, output-file routing, step-dependency checks; (2) infrastructure lens — state preconditions, rollback paths, destructive-step ordering, scope-creep traps. Tag each finding with one of four dimensions (Missing step / Underspecified step / Dependency gap / Likely intervention point). Score each finding 1-10 per the severity rubric in the parent skill file. After emitting the initial list, run the severity-forcing self-check on every 4-6 finding: upgrade to 7+ anything that must be fixed pre-execution. Write the findings to `plans/review_{plan-name}_step0_response.md` using the per-finding output format (Finding title, Dimension, Severity, Reason, What you noticed, Proposed fix) plus a TOTAL line. Abort threshold: severity 10 OR ≥5 findings at 7+ → stop and recommend re-running /plan-creation.
+
+Mode: 2 (create)
+
+( ) Step 0d: /question-loop the findings and apply accepted edits
+
+Invoke /question-loop skill (NOT AskUserQuestion tool — different shape; /question-loop is Socratic text-based, AskUserQuestion is a constrained option-picker). Walk the findings file one finding at a time: user approves (apply as plan edit), rejects, or skips. Exit ramp: if accepted severity-7+ findings reach 5 during the walk, stop and recommend re-running /plan-creation. Do NOT mark 0d done in that case. When the walk completes without tripping the exit ramp, mark 0d (x) and advance [n] to Step 2.
+
+Context: plans/review_{plan-name}_step0_response.md (set after 0b completes)
+Skills: question-loop
+Mode: 2 (create)
+```
+
+### Structural split is non-negotiable
+
+Do NOT collapse 0b and 0d into a single step. Generation and walk are distinct activities — 0b produces an artifact, 0d consumes it. Keeping them separate lets the walk resume cleanly after `/clear` and lets the user re-run either half independently.
 
 ---
 
