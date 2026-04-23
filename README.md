@@ -2,7 +2,7 @@
 
 **Context-engineered, plan-driven, step-at-a-time workflow for Claude Code.** 
 
-Four commands. One template. Your plan survives `/clear` because state lives on disk, not in the conversation. 
+Four commands. Two templates. Your plan survives `/clear` because state lives on disk, not in the conversation. 
 
 If you've been burned by an autonomous AI run that changed 47 files overnight — or you keep hitting Claude Code's weekly usage caps — this is built for you.
 
@@ -10,39 +10,49 @@ Under the hood, this is a context engineering layer. Every step in the plan decl
 
 ---
 
-## Install
+## Setup
 
-Clone this repo, then copy the four commands/skills and the settings template into your project's `.claude/` directory.
+Clone this repo, then copy five files into your project. The sixth (settings template) is reference-only.
+
+**Files to copy:**
+
+1. `.claude/commands/step.md` — the `/step` slash command
+2. `.claude/skills/question-loop/` — the `/question-loop` skill (directory)
+3. `.claude/skills/plan-creation/` — the `/plan-creation` skill (directory)
+4. `.claude/skills/plan-completion/` — the `/plan-completion` skill (directory)
+5. `plans/templates/plan-completion.md` — closing template used by `/plan-completion`
+
+**Reference-only (do not copy):**
+
+6. `.claude/settings.json.template` — example permissions and deny-list. Review it, then adapt your own `.claude/settings.json` by hand.
 
 ```bash
 # macOS / Linux
 git clone https://github.com/<owner>/clearstep.git
 cd clearstep
-mkdir -p ~/your-project/.claude/{commands,skills} ~/your-project/plans
+mkdir -p ~/your-project/.claude/{commands,skills} ~/your-project/plans/templates
 
 cp    .claude/commands/step.md            ~/your-project/.claude/commands/
 cp -r .claude/skills/question-loop        ~/your-project/.claude/skills/
 cp -r .claude/skills/plan-creation        ~/your-project/.claude/skills/
 cp -r .claude/skills/plan-completion      ~/your-project/.claude/skills/
-cp    .claude/settings.json.template      ~/your-project/.claude/settings.json
+cp    plans/templates/plan-completion.md   ~/your-project/plans/templates/
 ```
 
 ```powershell
 # Windows (PowerShell)
 git clone https://github.com/<owner>/clearstep.git
 cd clearstep
-New-Item -ItemType Directory -Force C:\your-project\.claude\commands, C:\your-project\.claude\skills, C:\your-project\plans | Out-Null
+New-Item -ItemType Directory -Force C:\your-project\.claude\commands, C:\your-project\.claude\skills, C:\your-project\plans\templates | Out-Null
 
 Copy-Item          .claude\commands\step.md            C:\your-project\.claude\commands\
 Copy-Item -Recurse .claude\skills\question-loop        C:\your-project\.claude\skills\
 Copy-Item -Recurse .claude\skills\plan-creation        C:\your-project\.claude\skills\
 Copy-Item -Recurse .claude\skills\plan-completion      C:\your-project\.claude\skills\
-Copy-Item          .claude\settings.json.template      C:\your-project\.claude\settings.json
+Copy-Item          plans\templates\plan-completion.md   C:\your-project\plans\templates\
 ```
 
-Open `~/your-project/.claude/settings.json` and delete the `_install_instructions` key. That's the whole install.
-
-No package manager. No server. No account. No Python. Five files on disk.
+No package manager. No server. No account. No Python. Five files on disk, one template to review.
 
 ---
 
@@ -59,6 +69,8 @@ your-project/                    <-- your project root
 │   ├── skills/{question-loop,plan-creation,plan-completion}/
 │   └── settings.json
 └── plans/                       <-- SIBLING of .claude/, NOT inside it
+    ├── templates/
+    │   └── plan-completion.md   <-- closing template for /plan-completion
     ├── hello-clear-step.md      <-- your plan files live here
     └── .step-queue.json         <-- auto-created on first /step
 ```
@@ -79,10 +91,11 @@ The slash commands resolve `plans/` relative to the current working directory, s
 | `/question-loop` (skill) | Socratic exploration before you commit to a plan. NOTED -> CONTEXT -> QUESTION -> ANSWER, one beat at a time. |
 | `/plan-creation` (skill) | Turns exploration into a numbered plan file with `[n]` marker and per-step Context hints. |
 | `/step` (command) | Executes ONE step from the active plan. Three-phase context load (orient -> history -> step + Context files under 50k tokens). Writes a timestamped `**Results:**` block, advances `[n]`, sharpens the next step's Context, stops. |
-| `/plan-completion` (skill) | When all steps are `[x]`: writes a Hall of Heroes eulogy, transitions the plan to `reference`, archives it. |
-| `settings.json.template` | Minimal permissions scaffold. Empty `allow` list. 19-entry destructive-shell `deny` blocklist. Empty `hooks` block you can fill yourself. |
+| `/plan-completion` (skill) | When all steps are `[x]`: spawns a closing plan from the template -- audit, CLAUDE.md update, commit, disposition. |
+| `plans/templates/plan-completion.md` | Closing template spawned by `/plan-completion`. Controls what happens during close -- reorder steps, skip ones you don't need, add your own. |
+| `settings.json.template` | Minimal permissions scaffold. Empty `allow` list. 19-entry destructive-shell `deny` blocklist. Empty `hooks` block you can fill yourself. Reference-only — review and adapt by hand. |
 
-Four commands. One template.
+Four commands. Two templates.
 
 ---
 
@@ -147,7 +160,7 @@ The plan file is still on disk. The `[n]` marker still points at Step 4. Clear S
 
 That's the whole onboarding. Everything else is graduated, not required:
 
-- After `/step` clicks, try `/plan-completion` to close a plan and generate a Hall of Heroes eulogy.
+- After `/step` clicks, try `/plan-completion` to close a plan (audit, CLAUDE.md update, commit, disposition).
 - Try `/question-loop` before `/plan-creation` next time you're not sure what the plan should be.
 
 ---
@@ -217,9 +230,31 @@ Restart Claude Code for the hook to take effect. Swap in any sound file you pref
 | `/question-loop` | Structured Socratic exploration. NOTED -> CONTEXT -> QUESTION -> ANSWER per turn. Use before you know what the plan should be. |
 | `/plan-creation` | Short Socratic exchange -> writes a numbered plan with `[n]` marker and per-step Context hints to `plans/your-plan-name.md`. Enforces descriptive 3-4 word plan names. |
 | `/step` | Executes exactly ONE step from the active plan. Three-phase context load, timestamped `**Results:**` block, `[n]` advances, next step's Context gets sharpened, stops. |
-| `/plan-completion` | When all steps are `[x]`: writes a Hall of Heroes eulogy, transitions the plan to `reference` status, archives it. |
+| `/plan-completion` | When all steps are `[x]`: spawns a closing plan from the template. Audit, CLAUDE.md update, commit, disposition -- each as its own step. |
 
 Four commands. That's the whole workflow.
+
+---
+
+## Patch Notes -- v0.69.42
+
+This update breaks the biggest bottleneck in the closing workflow and adds pre-flight plan review.
+
+### Plan Completion -- Reworked
+
+**Why.** The old plan-completion skill was a single monolithic block -- roughly 400 lines executing in one shot. On complex plans, this ate context window budget and gave you no way to inspect or interrupt the closing process. If something went wrong halfway through, you started over.
+
+**What.** Plan completion is now a thin driver (~60 lines) that spawns a multi-step closing plan from a configurable template (`plans/templates/plan-completion.md`). Each closing step -- audit, CLAUDE.md update, commit, disposition -- runs individually through `/step --0`. The Hall of Heroes eulogy is retired (this shortened the closing process with negligible loss).
+
+**How.** Place the closing template at `plans/templates/plan-completion.md` in your project. The template controls what happens during close -- reorder steps, skip ones you don't need, add your own. Git push behavior is self-configuring: on first close, it asks your preference (commit-only, commit-and-push, skip) and remembers it.
+
+### Step 0 -- Mandatory Gap Analysis
+
+Every generated plan now gets a mandatory pre-flight review before Step 2 fires. Step 0 generates findings scored by severity across four dimensions, then walks you through each one via `/question-loop` so you can accept or reject edits. Catches missing steps, dependency gaps, and underspecified work before they blow up mid-execution. Plans that survive Step 0 hit fewer surprises.
+
+### Minor Changes
+
+- `suggest_beep.py` hook removed. Beep setup is now paste-ready JSON snippets in the README -- pick your OS, copy one block.
 
 ---
 
