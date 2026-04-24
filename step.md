@@ -240,6 +240,7 @@ Pre-loaded: [list of Context files that were read]
 ```
 
 **Rules:**
+- Announce the step goal in plain language — no jargon, no internal phase labels (A/B/C), no technical framing unless the step content requires it
 - Show at most 5 recent completed steps (oldest first)
 - If more than 5 completed, prefix with "...(N earlier steps)"
 - Omit `[Queue N]` if using default queue
@@ -270,9 +271,13 @@ If no Mode is specified, infer from the step description (most steps are obvious
 - Run commands listed
 - Create files if needed
 
+**Investigation steps:** When a step involves investigation or exploration (prior work audit, stale-plan assessment, codebase survey), spawn an Explore agent to do the research instead of reading everything inline. Keeps the main context clean for execution.
+
 **Skill Invocation:** If step text contains "invoke [skill-name] skill", load and follow that skill's pattern.
 
 **Sub-step awareness:** If the `[n]` marker is on a parent step that has `( )` children, do NOT execute the parent description — execute the `(n)` child instead. If no child is marked `(n)`, mark the first `( )` child as `(n)` and execute that.
+
+**Staging discipline:** When committing, list every file you plan to stage and why before running `git add`. Never stage files that weren't part of the step's work — no ignored files, no unrelated changes.
 
 **CRITICAL:** Do ONLY this one step (or sub-step). Do not continue to subsequent steps.
 
