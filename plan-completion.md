@@ -4,7 +4,7 @@ triggers: plan complete, all steps done, close plan via template, spawn closing 
 
 ## Overview
 
-Thin driver. Invoked against a specific source plan. Spawns a closing plan from `plans/templates/plan-completion.md`, registers it in queue 0, tells the user to run `/clear` then `/step --0`, and exits. All closing-workflow logic (audit, CLAUDE.md update, commit, follow-up prompt, disposition, self-delete) lives in the template's Steps 2-8.
+Thin driver. Invoked against a specific source plan. Spawns a closing plan from `plans/templates/plan-closing.md`, registers it in queue 0, tells the user to run `/clear` then `/step --0`, and exits. All closing-workflow logic (audit, CLAUDE.md update, commit, follow-up prompt, disposition, self-delete) lives in the template's Steps 2-8.
 
 **Input:** `SOURCE_PLAN` -- path to the plan being closed (e.g., `plans/my-feature.md`). Provided by the caller.
 
@@ -42,9 +42,9 @@ If `plans/.step0-queue.json` is missing, create it with `{"active_plan": CLOSING
 
 ### 4. Dupe template, substitute variables
 
-Copy `plans/templates/plan-completion.md` to `CLOSING_PLAN`, then run a small substitution script (sed or Python) to replace every `{{VAR}}` in `CLOSING_PLAN` with its derived value across all 8 variables. Do NOT read the template into context to substitute -- use the filesystem.
+Copy `plans/templates/plan-closing.md` to `CLOSING_PLAN`, then run a small substitution script (sed or Python) to replace every `{{VAR}}` in `CLOSING_PLAN` with its derived value across all 8 variables. Do NOT read the template into context to substitute -- use the filesystem.
 
-If `plans/templates/plan-completion.md` does not exist, abort: "Template not found at `plans/templates/plan-completion.md`. Place the plan-completion template from the clearstep repo into that path and retry."
+If `plans/templates/plan-closing.md` does not exist, abort: "Template not found at `plans/templates/plan-closing.md`. Place the plan-completion template from the clearstep repo into that path and retry."
 
 After substitution, grep `CLOSING_PLAN` for any surviving occurrence of the 8 named placeholders (`{{SOURCE_PLAN}}`, `{{SOURCE_PLAN_NAME}}`, `{{SOURCE_PROJECT}}`, `{{CLOSING_PLAN}}`, `{{SOURCE_QUEUE}}`, `{{CLOSING_QUEUE}}`, `{{STEP_COUNT}}`, `{{DATE}}`). If ANY match: delete the malformed `CLOSING_PLAN` and abort -- a variable was missed. Do NOT ship a partially-substituted closing plan.
 

@@ -10,7 +10,7 @@ created: "{{DATE}}"
 
 ## About This Plan
 
-**Type:** Closing plan (ephemeral scaffold). Spawned by `/plan-completion` from the template at `plans/templates/plan-completion.md`. Executes the full closing ritual for `{{SOURCE_PLAN}}` as discrete `/step` iterations instead of one giant skill invocation.
+**Type:** Closing plan (ephemeral scaffold). Spawned by `/plan-completion` from the template at `plans/templates/plan-closing.md`. Executes the full closing ritual for `{{SOURCE_PLAN}}` as discrete `/step` iterations instead of one giant skill invocation.
 
 **Lifecycle:** The skill copies the template here, substitutes variables, adds `{{CLOSING_PLAN}}` to `plans/.step0-queue.json` (the closing-plan queue -- NOT the main `.step-queue.json` where the source plan lives), marks Step 2 as `[n]`, and kicks off `/step --0`. Steps fire one at a time until **Step 8** (terminal), which runs disposition, sweep, commit, report, queue drain, and self-delete. For **template** disposition, Step 8 pauses after extraction — run `/step --0` again and Step 8 resumes at Phase C.
 
@@ -199,7 +199,7 @@ A plan's constraints and invariants are the most useful thing to document for fu
 
 - **(a) Create and populate** -- create the file, then proceed to the Execution section. Populate with what future sessions need to know: what the directory is, core invariants, sync/relationship notes, hard rules for files inside
 - **(b) Skip this time** -- mark Step 4 done with Results: "Skipped -- no CLAUDE.md exists, user chose not to create"
-- **(c) Skip permanently** -- mark Step 4 done, then offer: "Want me to edit the plan-completion template to remove this CLAUDE.md step for all future closes? This is reversible -- you can always re-add it later by copying the step back from the clearstep repo." If user agrees, delete this Step 4 section from `plans/templates/plan-completion.md` and confirm. If not, just skip this time
+- **(c) Skip permanently** -- mark Step 4 done, then offer: "Want me to edit the plan-completion template to remove this CLAUDE.md step for all future closes? This is reversible -- you can always re-add it later by copying the step back from the clearstep repo." If user agrees, delete this Step 4 section from `plans/templates/plan-closing.md` and confirm. If not, just skip this time
 
 The skip-permanently option is the **self-configuring ritual** pattern: the first close surfaces the question, and the user's answer locks in their preference by editing the template itself.
 
@@ -513,7 +513,7 @@ Want me to lock this choice into the template so future closes skip the prompt?
 [y/n]
 ```
 
-If **yes**: edit `plans/templates/plan-completion.md` to replace this probe section (C.4) with the hardcoded behavior for their choice. Specifically:
+If **yes**: edit `plans/templates/plan-closing.md` to replace this probe section (C.4) with the hardcoded behavior for their choice. Specifically:
 - **(a)** → remove the probe, keep the staging/commit block, delete the push line and push error-recovery section
 - **(b)** → remove the probe, keep the staging/commit/push block as-is (matches the live template)
 - **(c)** → N/A — this is a one-time skip, not a permanent preference. Do not offer the template edit for (c).

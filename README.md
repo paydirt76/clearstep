@@ -12,44 +12,62 @@ Under the hood, this is a context engineering layer. Every step in the plan decl
 
 ## Setup
 
-Clone this repo, then copy five files into your project. The sixth (settings template) is reference-only.
+Clone this repo, then let Claude Code install it -- or copy the files manually. All five files are at the repo root. Each gets renamed and placed into the right directory in your project.
 
-**Files to copy:**
+```
+git clone https://github.com/paydirt76/clearstep.git
+```
 
-1. `.claude/commands/step.md` — the `/step` slash command
-2. `.claude/skills/question-loop/` — the `/question-loop` skill (directory)
-3. `.claude/skills/plan-creation/` — the `/plan-creation` skill (directory)
-4. `.claude/skills/plan-completion/` — the `/plan-completion` skill (directory)
-5. `plans/templates/plan-completion.md` — closing template used by `/plan-completion`
+**Easiest:** Open Claude Code in your project directory and say:
 
-**Reference-only (do not copy):**
+> Read the README in ../clearstep (or wherever you cloned it) and install Clear Step in this project.
 
-6. `.claude/settings.json.template` — example permissions and deny-list. Review it, then adapt your own `.claude/settings.json` by hand.
+**Manual install:** Copy each file to its destination, creating directories as needed.
+
+| Repo file | Install to | What it is |
+|-----------|-----------|------------|
+| `step.md` | `.claude/commands/step.md` | The `/step` slash command |
+| `question-loop.md` | `.claude/skills/question-loop/SKILL.md` | Socratic exploration skill |
+| `plan-creation.md` | `.claude/skills/plan-creation/SKILL.md` | Plan authoring skill |
+| `plan-completion.md` | `.claude/skills/plan-completion/SKILL.md` | Plan closing skill |
+| `plan-closing.md` | `plans/templates/plan-closing.md` | Closing template used by `/plan-completion` |
+| `settings.json.template` | *(reference only)* | Review it, then adapt your own `.claude/settings.json` by hand |
 
 ```bash
 # macOS / Linux
-git clone https://github.com/<owner>/clearstep.git
 cd clearstep
-mkdir -p ~/your-project/.claude/{commands,skills} ~/your-project/plans/templates
+PROJECT=~/your-project
 
-cp    .claude/commands/step.md            ~/your-project/.claude/commands/
-cp -r .claude/skills/question-loop        ~/your-project/.claude/skills/
-cp -r .claude/skills/plan-creation        ~/your-project/.claude/skills/
-cp -r .claude/skills/plan-completion      ~/your-project/.claude/skills/
-cp    plans/templates/plan-completion.md   ~/your-project/plans/templates/
+mkdir -p "$PROJECT/.claude/commands" \
+         "$PROJECT/.claude/skills/question-loop" \
+         "$PROJECT/.claude/skills/plan-creation" \
+         "$PROJECT/.claude/skills/plan-completion" \
+         "$PROJECT/plans/templates"
+
+cp step.md              "$PROJECT/.claude/commands/step.md"
+cp question-loop.md     "$PROJECT/.claude/skills/question-loop/SKILL.md"
+cp plan-creation.md     "$PROJECT/.claude/skills/plan-creation/SKILL.md"
+cp plan-completion.md   "$PROJECT/.claude/skills/plan-completion/SKILL.md"
+cp plan-closing.md      "$PROJECT/plans/templates/plan-closing.md"
 ```
 
 ```powershell
 # Windows (PowerShell)
-git clone https://github.com/<owner>/clearstep.git
 cd clearstep
-New-Item -ItemType Directory -Force C:\your-project\.claude\commands, C:\your-project\.claude\skills, C:\your-project\plans\templates | Out-Null
+$Project = "C:\your-project"
 
-Copy-Item          .claude\commands\step.md            C:\your-project\.claude\commands\
-Copy-Item -Recurse .claude\skills\question-loop        C:\your-project\.claude\skills\
-Copy-Item -Recurse .claude\skills\plan-creation        C:\your-project\.claude\skills\
-Copy-Item -Recurse .claude\skills\plan-completion      C:\your-project\.claude\skills\
-Copy-Item          plans\templates\plan-completion.md   C:\your-project\plans\templates\
+New-Item -ItemType Directory -Force `
+    "$Project\.claude\commands", `
+    "$Project\.claude\skills\question-loop", `
+    "$Project\.claude\skills\plan-creation", `
+    "$Project\.claude\skills\plan-completion", `
+    "$Project\plans\templates" | Out-Null
+
+Copy-Item step.md            "$Project\.claude\commands\step.md"
+Copy-Item question-loop.md   "$Project\.claude\skills\question-loop\SKILL.md"
+Copy-Item plan-creation.md   "$Project\.claude\skills\plan-creation\SKILL.md"
+Copy-Item plan-completion.md "$Project\.claude\skills\plan-completion\SKILL.md"
+Copy-Item plan-closing.md    "$Project\plans\templates\plan-closing.md"
 ```
 
 No package manager. No server. No account. No Python. Five files on disk, one template to review.
@@ -70,7 +88,7 @@ your-project/                    <-- your project root
 │   └── settings.json
 └── plans/                       <-- SIBLING of .claude/, NOT inside it
     ├── templates/
-    │   └── plan-completion.md   <-- closing template for /plan-completion
+    │   └── plan-closing.md      <-- closing template for /plan-completion
     ├── hello-clear-step.md      <-- your plan files live here
     └── .step-queue.json         <-- auto-created on first /step
 ```
@@ -92,7 +110,7 @@ The slash commands resolve `plans/` relative to the current working directory, s
 | `/plan-creation` (skill) | Turns exploration into a numbered plan file with `[n]` marker and per-step Context hints. |
 | `/step` (command) | Executes ONE step from the active plan. Three-phase context load (orient -> history -> step + Context files under 50k tokens). Writes a timestamped `**Results:**` block, advances `[n]`, sharpens the next step's Context, stops. |
 | `/plan-completion` (skill) | When all steps are `[x]`: spawns a closing plan from the template -- audit, CLAUDE.md update, commit, disposition. |
-| `plans/templates/plan-completion.md` | Closing template spawned by `/plan-completion`. Controls what happens during close -- reorder steps, skip ones you don't need, add your own. |
+| `plan-closing.md` (template) | Closing template spawned by `/plan-completion`. Controls what happens during close -- reorder steps, skip ones you don't need, add your own. |
 | `settings.json.template` | Minimal permissions scaffold. Empty `allow` list. 19-entry destructive-shell `deny` blocklist. Empty `hooks` block you can fill yourself. Reference-only — review and adapt by hand. |
 
 Four commands. Two templates.
@@ -244,9 +262,9 @@ This update breaks the biggest bottleneck in the closing workflow and adds pre-f
 
 **Why.** The old plan-completion skill was a single monolithic block -- roughly 400 lines executing in one shot. On complex plans, this ate context window budget and gave you no way to inspect or interrupt the closing process. If something went wrong halfway through, you started over.
 
-**What.** Plan completion is now a thin driver (~60 lines) that spawns a multi-step closing plan from a configurable template (`plans/templates/plan-completion.md`). Each closing step -- audit, CLAUDE.md update, commit, disposition -- runs individually through `/step --0`. The Hall of Heroes eulogy is retired (this shortened the closing process with negligible loss).
+**What.** Plan completion is now a thin driver (~60 lines) that spawns a multi-step closing plan from the `plan-closing.md` template. Each closing step -- audit, CLAUDE.md update, commit, disposition -- runs individually through `/step --0`. The Hall of Heroes eulogy is retired (this shortened the closing process with negligible loss).
 
-**How.** Place the closing template at `plans/templates/plan-completion.md` in your project. The template controls what happens during close -- reorder steps, skip ones you don't need, add your own. Git push behavior is self-configuring: on first close, it asks your preference (commit-only, commit-and-push, skip) and remembers it.
+**How.** The setup copies `plan-closing.md` to `plans/templates/plan-closing.md` in your project. The template controls what happens during close -- reorder steps, skip ones you don't need, add your own. Git push behavior is self-configuring: on first close, it asks your preference (commit-only, commit-and-push, skip) and remembers it.
 
 ### Step 0 -- Mandatory Gap Analysis
 
