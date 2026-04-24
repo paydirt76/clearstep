@@ -34,6 +34,6 @@ Initial public release.
 ### Added
 - `/step` command — execute one plan step at a time with Phase A/B/C context loading, `[n]` marker advancement, and mandatory Step 5f reflection.
 - `/plan-creation` skill — build numbered-step plans with sparse gap-of-2 numbering, Context/Skills/Mode hints, and sub-step markers.
-- `/plan-completion` skill — close out a finished plan with Hall of Heroes eulogy generation, status transition, and index removal.
+- `/plan-completion` skill — close out a finished plan with a structured closing ritual, status transition, and index removal.
 - `/question-loop` skill — Socratic NOTED/CONTEXT/QUESTION/ANSWER exploration for design decisions before implementation.
 - `settings.json.template` — minimal starter settings with an empty `hooks` block and a 19-entry destructive-shell deny list. README includes paste-ready Stop-hook beep snippets for macOS, Linux, and Windows.
