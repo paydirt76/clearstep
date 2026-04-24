@@ -176,10 +176,39 @@ Then run, with no arguments:
 
 The plan file is still on disk. The `[n]` marker still points at Step 4. Clear Step reads the plan, executes the next step, advances the marker. Same conversation-clearing ritual, same forward progress.
 
-That's the whole onboarding. Everything else is graduated, not required:
+That's the core loop. Steps 1-2 used a hand-written plan to prove the mechanism. In practice, you generate plans and explore ideas with the other commands:
 
-- After `/step` clicks, try `/plan-completion` to close a plan (audit, CLAUDE.md update, commit, disposition).
-- Try `/question-loop` before `/plan-creation` next time you're not sure what the plan should be.
+### 3. Writing your own plans with /plan-creation
+
+When you have a real task, don't hand-write the plan file. Tell Claude Code what you want to build, then:
+
+```
+/plan-creation
+```
+
+It asks a few clarifying questions (goal, constraints, what files are involved), then writes a numbered plan to `plans/your-plan-name.md` with `[n]` markers, Context hints per step, and gap-of-2 numbering so you can insert steps later without renumbering. A mandatory Step 0 (Gap Analysis) reviews the plan before execution begins -- it scores findings by severity and walks them with you so you can accept or reject edits before Step 2 fires.
+
+Once the plan exists, run `/step` to execute it one step at a time.
+
+### 4. Exploring before you plan with /question-loop
+
+When you're not sure what the plan should be yet -- you have a vague goal but haven't decided the approach:
+
+```
+/question-loop
+```
+
+This runs a Socratic exploration loop. Each turn follows a NOTED -> CONTEXT -> QUESTION -> ANSWER rhythm: it acknowledges what you said, adds relevant context, asks one focused question, and waits. No code gets written. The output is clarity, not artifacts. When the shape of the work is clear, exit the loop and run `/plan-creation`.
+
+### 5. Closing a finished plan with /plan-completion
+
+When all steps in a plan are marked `[x]`:
+
+```
+/plan-completion
+```
+
+This spawns a closing plan from the `plan-closing.md` template. The closing ritual runs as discrete `/step` iterations -- audit what changed, update your project's CLAUDE.md, commit, choose what to do with the plan file (archive, delete, or keep). Each closing step is inspectable and interruptible, same as any other step.
 
 ---
 
