@@ -1,6 +1,6 @@
 ---
 name: plan-creation
-description: Creating implementation plans for multi-step tasks. Use when user asks to plan a feature, create a plan file, or break down a complex task into steps.
+description: Creating implementation plans for multi-step tasks. Use when user asks to plan a feature, create a plan file, or break down a complex task into steps. Not for executing steps (/step) or closing plans (plan-completion).
 triggers:
   - create a plan
   - make a plan
@@ -59,7 +59,7 @@ This keeps plans version-controlled with the project, discoverable by the slash 
 
 ## File Naming
 
-**Use descriptive three-word names that explain the plan's purpose:**
+**Use descriptive three-four word names that explain the plan's purpose:**
 
 | Good | Bad |
 |------|-----|
@@ -210,7 +210,7 @@ Mode: 5 (refactor)
 - **Grep targets:** Large file sets the step searches via Glob/Grep at execution time, not via Read at Phase C. Format: `Grep targets (DO NOT pre-load — N files, ~XK tokens; use Glob/Grep): dir/ (narrowing rule)`. Use when a step touches "specific entities cited later" within a directory of dozens of files.
 - **Skills:** Skill names from the routing table that this step needs. Uses "invoke [skill-name] skill" language.
 - **Mode:** Suggested mode (1=review, 2=create, 3=test, 4=fix, 5=refactor).
-- **Design:** Path to a design doc or section that contains the step's implementation spec. When a step requires schema decisions, mechanism trade-offs, or multi-paragraph specs, write them to a design doc in `docs/` and point to it here -- do NOT inline them in the step body. The step body should say WHAT and WHY in 3-8 lines; the design doc says HOW.
+- **Design:** Path to a design doc or section that contains the step's implementation spec. When a step requires schema decisions, mechanism trade-offs, or multi-paragraph specs, write them to a design doc in `docs/` and point to it here -- do NOT inline them in the step body. The step body should say WHAT and WHY in 3-8 lines; the design doc says HOW. **Dual-surface sync:** the `Design:` doc is the authoritative HOW that every referencing step points at, so the plan step and the design-doc section are two surfaces of one spec. When a Step 0d finding (or any later revision) changes a mechanism, edit BOTH -- a change applied to the plan step alone silently drifts the design doc out of sync, and the next step that pre-loads the stale `Design:` section will build the wrong thing.
 
 **The larger principle: Phase C is code, not Claude.** Phase C reads `Context:` paths literally — it cannot walk directories, resolve "all X files" or "output from Step Y", skip oversized files, or decide a path is for searching. Relevance is NOT the test. The test is: would `Read [path]` succeed in <10K tokens AND does Claude Code itself need to reason about it?
 
@@ -561,11 +561,28 @@ A `TOTAL` line at the bottom summarizes severity distribution and severity-7+ co
 | **2** | Self-downgraded nit (formatting, line ranges, narrowing) | 10-second fix or skip |
 | **1** | Cosmetic nit (zero execution impact) | Skip |
 
-### Severity-forcing self-check (mandatory, critical in-session reviewer)
+### What NOT to score 7+
 
-AFTER emitting the initial findings list, the reviewer re-reads its own list and asks, for every mid-band finding (severity 4-6): *"does this need to be fixed BEFORE Step 2 of the reviewed plan executes, or can it be patched inline during execution?"* Anything that must be fixed pre-execution gets upgraded to severity 7+.
+Common over-ratings — score these 4-5 instead:
 
-This self-check matters MORE in the public variant than in an API-gated one: the reviewer is the same Claude Code session that just wrote the plan, with no model-change firewall between writer and reviewer. That self-bias shows up as severity undercalling. Treat the self-check as a forcing function with extra weight — err toward upgrade when on the fence.
+- **"Plan doesn't list every call site that needs updating"** → sev 4-5. Executor greps for the symbol in 30 seconds. Only sev 7+ if the call sites span unrelated subsystems and the executor wouldn't know to look.
+- **"Line range in Context: line is wrong by N lines"** → sev 5 (in-flight patchable). Typo. Executor finds the right code via filename + function name.
+- **"Step description is vague but the mechanically-obvious answer is one of two options"** → sev 5. Executor picks one and moves on; user-in-loop can redirect at runtime.
+- **"Plan invents a field name a future step will use, but doesn't lock it in the schema-defining step"** → sev 5-6 depending on cascade risk. Sev 7 only if multiple downstream steps already reference the invented name AND the schema-defining step is already locked.
+
+True sev 7-8 requires that the executor **cannot reasonably proceed** without external clarification — not just "would benefit from more specificity." If the executor can recover the missing detail via grep, file-read, or one clarifying question, the finding is sev 4-5.
+
+### Severity-forcing self-check (mandatory, both directions)
+
+AFTER emitting the initial findings list, the reviewer re-reads its own list and runs TWO checks:
+
+**Up-check (for sev 4-6 findings):** *"Does this need to be fixed BEFORE Step 2 of the reviewed plan executes, or can it be patched inline?"* Anything that must be pre-fixed → upgrade to 7+.
+
+**Down-check (for sev 7-8 findings):** *"Could a competent executor reach the right answer in under 5 minutes via grep, file-read, or one clarifying question?"* If yes → downgrade to 4-5. Sev 7+ is reserved for findings that require external information the executor cannot recover from the code or plan as-written. See the "What NOT to score 7+" anti-patterns section above.
+
+Both checks are forcing functions, not advisory. Without the down-check, reviewers anchor-shop high on infrastructure findings — landing "executor would grep for this" issues at sev 7-8 instead of sev 4-5, and falsely tripping the abort ramp. Without the up-check, reviewers undersever step-blockers as in-flight patchables. Run both.
+
+These checks matter MORE in the public variant than in an API-gated one: the reviewer is the same Claude Code session that just wrote the plan, with no model-change firewall between writer and reviewer. That same-session bias cuts both ways — sometimes the writer over-rates findings to flag "this needs more thought," sometimes under-rates them to avoid undermining their own work. The two-way check absorbs both directions.
 
 ### Abort threshold
 
@@ -595,7 +612,7 @@ Mode: 2 (create)
 
 ( ) Step 0d: /question-loop the findings and apply accepted edits
 
-Invoke /question-loop skill (NOT AskUserQuestion tool — different shape; /question-loop is Socratic text-based, AskUserQuestion is a constrained option-picker). Walk the findings file one finding at a time: user approves (apply as plan edit), rejects, or skips. Exit ramp: if accepted severity-7+ findings reach 5 during the walk, stop and recommend re-running /plan-creation. Do NOT mark 0d done in that case. When the walk completes without tripping the exit ramp, mark 0d (x) and advance [n] to Step 2.
+Invoke /question-loop skill (NOT AskUserQuestion tool — different shape; /question-loop is Socratic text-based, AskUserQuestion is a constrained option-picker). Walk the findings file one finding at a time: user approves (apply as plan edit), rejects, or skips. Dual-surface sync: when an approved finding changes a mechanism documented in a step's `Design:` doc, apply the edit to BOTH the plan step body AND the matching design-doc section -- the design doc is the authoritative HOW every step points at, so a plan-only edit silently drifts the spec. A staged finding naming only the plan step still obligates the design-doc edit. Exit ramp: if accepted severity-7+ findings reach 5 during the walk, stop and recommend re-running /plan-creation. Do NOT mark 0d done in that case. When the walk completes without tripping the exit ramp, mark 0d (x) and advance [n] to Step 2.
 
 Context: plans/review_{plan-name}_step0_response.md (set after 0b completes)
 Skills: question-loop
@@ -705,6 +722,6 @@ For large-scale audits across many projects/files:
 | Giant steps | Break into 2-3 smaller steps |
 | No success criteria | Add measurable outcomes |
 | No current state | Document starting point |
-| Whimsical name | Use descriptive three-word name |
+| Whimsical name | Use descriptive three-four word name |
 | Plan saved inside `.claude/` | Put `plans/` at project root as sibling of `.claude/` |
 

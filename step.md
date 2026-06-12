@@ -451,8 +451,12 @@ STOP. Do NOT edit the plan. Wait for user confirmation before editing.
 If plan is complete, tell the user:
 
 ```
-Plan complete! Run /plan-completion to finalize.
+Plan complete! Copy this command, /clear, then paste it:
+
+/plan-completion [plan-filename.md]
 ```
+
+Replace `[plan-filename.md]` with the actual plan filename (e.g., `/plan-completion my-feature.md`). The user needs to `/clear` first so `/plan-completion` runs in a clean context window.
 
 Do NOT change plan status or remove from index — `/plan-completion` handles the full ritual (status transition to `reference`, disposition choice, index removal).
 
@@ -463,7 +467,7 @@ Do NOT change plan status or remove from index — `/plan-completion` handles th
 Completed [Queue N]: Step [N] - [title]
 Plan: [filename]
 Progress: [x_count]/[total_count]
-Next: [n] Step [N+1] - [next title] (or "Plan complete!" if no more steps)
+Next: [n] Step [N+1] - [next title] (or "Plan complete! Copy, /clear, paste: /plan-completion [filename.md]")
 
 To continue: /step [--N]
 ```
@@ -495,7 +499,7 @@ To continue: /step [--N]
 **No `[n]` marker found:** Fall back to first `[ ]` step. Flag: "No [n] marker -- using first open step."
 
 **No more steps (plan complete):**
-- Follow Plan Completion Workflow from CLAUDE.md
+- Tell the user to run `/plan-completion [plan-filename.md]` (see Step 6: On Plan Completion)
 - Then show Plan Selection Menu (Step 1B)
 
 **Next step is `[w]` or `[!]`:** Skip and flag to user. Try next `[ ]` after it.

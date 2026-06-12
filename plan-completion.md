@@ -1,3 +1,8 @@
+---
+name: plan-completion
+description: Thin template-driver closeout: spawns a closing plan from plans/templates/plan-closing.md, registers it on queue 0, hands off to /step --0 for the ritual (audit, CLAUDE.md update, commit, disposition, self-delete). Use when all plan steps are done. Not for creating plans (plan-creation) or executing steps (/step).
+---
+
 # Plan Completion Skill
 
 triggers: plan complete, all steps done, close plan via template, spawn closing plan, delete plan
